@@ -89,11 +89,19 @@ class ChannelParser:
                     submit_urls.append(url)
                     break
 
-        # Also check text for submit keywords without URLs
-        has_submit_form = bool(submit_urls) or any(
-            kw in text
-            for kw in ["submit your", "send demo", "send your demo", "demo submission", "submit music"]
-        )
+        # Check text for submit keywords — if found, grab any nearby URL as submit URL
+        submit_keywords = ["submit your", "send demo", "send your demo", "demo submission", "submit music"]
+        if not submit_urls and any(kw in text for kw in submit_keywords):
+            # Add non-social URLs from description as potential submit URLs
+            for url in all_urls:
+                is_social = any(
+                    re.search(p, url, re.IGNORECASE)
+                    for p in SOCIAL_PATTERNS.values()
+                )
+                if not is_social:
+                    submit_urls.append(url)
+
+        has_submit_form = bool(submit_urls)
 
         # Extract social links
         social_links = {}

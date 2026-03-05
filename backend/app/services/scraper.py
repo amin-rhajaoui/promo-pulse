@@ -66,6 +66,32 @@ async def run_scrape(run_id: str, subgenres: list[str], demo_mode: bool = False)
             active_tasks.pop(run_id, None)
 
 
+def _titles_match(search_title: str, detail_title: str) -> bool:
+    """Check if the title from search.list roughly matches channels.list.
+
+    YouTube search can return a channel ID that belongs to a different channel.
+    We compare normalized titles and require high overlap.
+    """
+    import re as _re
+
+    def normalize(t: str) -> set[str]:
+        # Lowercase, extract alphanumeric tokens of 2+ chars
+        return {w for w in _re.findall(r"[a-z0-9]{2,}", t.lower())}
+
+    words_search = normalize(search_title)
+    words_detail = normalize(detail_title)
+    if not words_search or not words_detail:
+        return True  # Can't compare, allow through
+
+    overlap = words_search & words_detail
+    # Check overlap from both directions, use the best match
+    ratio = max(
+        len(overlap) / len(words_search),
+        len(overlap) / len(words_detail),
+    )
+    return ratio >= 0.7
+
+
 async def _run_live(
     db: AsyncSession, run_id: str, run: ScrapeRun,
     keywords: list[str], cancel_event: asyncio.Event,
@@ -91,8 +117,10 @@ async def _run_live(
             if not results:
                 continue
 
-            # Filter new IDs
-            new_ids = [r["youtube_id"] for r in results if r["youtube_id"] not in seen_ids]
+            # Filter new IDs and keep search titles for cross-validation
+            new_results = [r for r in results if r["youtube_id"] not in seen_ids]
+            new_ids = [r["youtube_id"] for r in new_results]
+            search_titles = {r["youtube_id"]: r["title"] for r in new_results}
             if not new_ids:
                 continue
             seen_ids.update(new_ids)
@@ -106,6 +134,18 @@ async def _run_live(
                     # Filter: skip channels with < 10K subscribers
                     if ch_data.get("subscriber_count", 0) < 10_000:
                         continue
+
+                    # Cross-validate: skip if channels.list title doesn't
+                    # match the search title (channel ID mismatch)
+                    search_title = search_titles.get(ch_data["youtube_id"], "")
+                    detail_title = ch_data.get("title", "")
+                    if search_title and detail_title:
+                        if not _titles_match(search_title, detail_title):
+                            logger.warning(
+                                "Title mismatch for %s: search='%s' vs detail='%s', skipping",
+                                ch_data["youtube_id"], search_title, detail_title,
+                            )
+                            continue
 
                     parsed = parser.parse(ch_data.get("description", ""))
                     subgenres_detected = parser.detect_subgenres(

@@ -107,11 +107,19 @@ class YouTubeAPI:
             stats = item.get("statistics", {})
             branding = item.get("brandingSettings", {}).get("channel", {})
 
+            snippet_desc = snippet.get("description", "")
+            branding_desc = branding.get("description", "")
+            # Only append branding description if it adds new info
+            if branding_desc and branding_desc != snippet_desc:
+                full_desc = snippet_desc + "\n" + branding_desc
+            else:
+                full_desc = snippet_desc
+
             results.append({
                 "youtube_id": item["id"],
                 "title": snippet.get("title", ""),
                 "custom_url": snippet.get("customUrl"),
-                "description": snippet.get("description", "") + "\n" + branding.get("description", ""),
+                "description": full_desc,
                 "thumbnail_url": snippet.get("thumbnails", {}).get("medium", {}).get("url"),
                 "country": snippet.get("country"),
                 "published_at": _parse_date(snippet.get("publishedAt")),
