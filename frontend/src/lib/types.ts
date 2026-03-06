@@ -21,6 +21,9 @@ export interface Channel {
   notes: string | null
   last_upload_at: string | null
   is_buyable: boolean
+  authenticity_score: number
+  authenticity_label: string
+  authenticity_signals: Record<string, any>
   created_at: string
   updated_at: string
 }

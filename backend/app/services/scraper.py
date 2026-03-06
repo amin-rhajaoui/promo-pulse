@@ -13,6 +13,7 @@ from app.database import async_session
 from app.models import Channel, ScrapeRun
 from app.services.parser import ChannelParser
 from app.services.scorer import ChannelScorer
+from app.services.authenticity import AuthenticityScorer
 from app.services.youtube_api import YouTubeAPI
 
 logger = logging.getLogger(__name__)
@@ -160,6 +161,9 @@ async def _run_live(
                     one_year_ago = date.today() - timedelta(days=365)
                     is_buyable = last_upload is not None and last_upload < one_year_ago
 
+                    # Authenticity scoring
+                    auth_score, auth_label, auth_signals = AuthenticityScorer.score(ch_data)
+
                     await _upsert_channel(db, {
                         **ch_data, **parsed,
                         "subgenres": subgenres_detected,
@@ -167,6 +171,9 @@ async def _run_live(
                         "tier": tier,
                         "last_upload_at": last_upload,
                         "is_buyable": is_buyable,
+                        "authenticity_score": auth_score,
+                        "authenticity_label": auth_label,
+                        "authenticity_signals": auth_signals,
                         "scrape_run_id": uuid.UUID(run_id),
                     })
 
@@ -252,6 +259,9 @@ async def _run_demo(
             one_year_ago = date.today() - timedelta(days=365)
             is_buyable = last_upload is not None and last_upload < one_year_ago
 
+            # Authenticity scoring
+            auth_score, auth_label, auth_signals = AuthenticityScorer.score(ch_data)
+
             await _upsert_channel(db, {
                 **ch_data, **parsed,
                 "subgenres": subgenres_detected,
@@ -259,6 +269,9 @@ async def _run_demo(
                 "tier": tier,
                 "last_upload_at": last_upload,
                 "is_buyable": is_buyable,
+                "authenticity_score": auth_score,
+                "authenticity_label": auth_label,
+                "authenticity_signals": auth_signals,
                 "scrape_run_id": uuid.UUID(run_id),
             })
 
@@ -296,6 +309,9 @@ async def _upsert_channel(db: AsyncSession, data: dict):
         tier=data.get("tier"),
         last_upload_at=data.get("last_upload_at"),
         is_buyable=data.get("is_buyable", False),
+        authenticity_score=data.get("authenticity_score", 0),
+        authenticity_label=data.get("authenticity_label", "unknown"),
+        authenticity_signals=data.get("authenticity_signals", {}),
         scrape_run_id=data.get("scrape_run_id"),
     ).on_conflict_do_update(
         index_elements=["youtube_id"],
@@ -316,6 +332,9 @@ async def _upsert_channel(db: AsyncSession, data: dict):
             "tier": data.get("tier"),
             "last_upload_at": data.get("last_upload_at"),
             "is_buyable": data.get("is_buyable", False),
+            "authenticity_score": data.get("authenticity_score", 0),
+            "authenticity_label": data.get("authenticity_label", "unknown"),
+            "authenticity_signals": data.get("authenticity_signals", {}),
             "scrape_run_id": data.get("scrape_run_id"),
         },
     )

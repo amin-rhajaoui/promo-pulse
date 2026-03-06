@@ -19,6 +19,7 @@ export async function fetchChannels(params: {
   has_email?: boolean
   is_buyable?: boolean
   subgenre?: string
+  authenticity?: string
   sort_by?: string
   sort_dir?: string
 }): Promise<ChannelListResponse> {
@@ -93,4 +94,15 @@ export function getExportCsvUrl(params?: {
 
 export function getExportEmailsUrl(): string {
   return "/api/export/emails"
+}
+
+// Authenticity
+export async function recalculateAllAuthenticity(): Promise<{ updated: number }> {
+  const { data } = await api.post("/channels/recalculate-authenticity")
+  return data
+}
+
+export async function recalculateChannelAuthenticity(id: string): Promise<Channel> {
+  const { data } = await api.post(`/channels/${id}/recalculate-authenticity`)
+  return data
 }

@@ -106,6 +106,45 @@ export function ChannelDetail({ channel, onClose, onUpdate }: Props) {
           )}
         </div>
 
+        <div>
+          <h3 className="font-semibold mb-2 flex items-center gap-2">
+            Authenticity
+            <Badge className={
+              channel.authenticity_label === "clean" ? "bg-emerald-600 text-white" :
+              channel.authenticity_label === "suspect" ? "bg-amber-500 text-black" :
+              channel.authenticity_label === "fake" ? "bg-red-600 text-white" :
+              "bg-gray-400 text-black"
+            }>
+              {channel.authenticity_label === "clean" ? "🟢 Clean" :
+               channel.authenticity_label === "suspect" ? "🟡 Suspect" :
+               channel.authenticity_label === "fake" ? "🔴 Fake" : "⚪ Unknown"}
+              {" — "}{channel.authenticity_score}/100
+            </Badge>
+          </h3>
+          {channel.authenticity_signals && Object.keys(channel.authenticity_signals).filter(k => !k.startsWith("_")).length > 0 && (
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              {Object.entries(channel.authenticity_signals)
+                .filter(([key]) => !key.startsWith("_"))
+                .map(([key, val]) => {
+                  const signal = val as { verdict?: string; ratio?: number; avg?: number; count?: number; length?: number }
+                  const verdictColor =
+                    signal.verdict?.includes("fake") || signal.verdict?.includes("inconsistent") ? "text-red-500" :
+                    signal.verdict?.includes("suspicious") || signal.verdict?.includes("low") ? "text-amber-500" :
+                    signal.verdict?.includes("good") || signal.verdict?.includes("organic") || signal.verdict?.includes("excellent") || signal.verdict?.includes("clean") || signal.verdict?.includes("consistent") || signal.verdict?.includes("active") || signal.verdict?.includes("detailed") || signal.verdict?.includes("viral") ? "text-emerald-500" :
+                    "text-muted-foreground"
+                  return (
+                    <div key={key} className="p-2 rounded-md border text-xs">
+                      <div className="font-medium text-muted-foreground">{key.replace(/_/g, " ")}</div>
+                      <div className={`font-semibold ${verdictColor}`}>{signal.verdict || "—"}</div>
+                      {signal.ratio !== undefined && <div className="text-muted-foreground">ratio: {signal.ratio}</div>}
+                      {signal.avg !== undefined && <div className="text-muted-foreground">avg: {signal.avg.toLocaleString()}</div>}
+                    </div>
+                  )
+                })}
+            </div>
+          )}
+        </div>
+
         {spotifyUrl && (
           <div>
             <h3 className="font-semibold mb-2 flex items-center gap-2">

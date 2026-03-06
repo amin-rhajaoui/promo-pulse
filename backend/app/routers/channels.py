@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import Channel
 from app.schemas import ChannelListOut, ChannelOut, ChannelUpdateRequest
+from app.services.authenticity import AuthenticityScorer
 
 router = APIRouter(tags=["channels"])
 
@@ -23,6 +24,7 @@ async def list_channels(
     has_email: bool | None = None,
     is_buyable: bool | None = None,
     subgenre: str | None = None,
+    authenticity: str | None = None,
     sort_by: str = "score",
     sort_dir: str = "desc",
     db: AsyncSession = Depends(get_db),
@@ -56,6 +58,10 @@ async def list_channels(
     if subgenre:
         query = query.where(Channel.subgenres.any(subgenre))
         count_query = count_query.where(Channel.subgenres.any(subgenre))
+
+    if authenticity:
+        query = query.where(Channel.authenticity_label == authenticity)
+        count_query = count_query.where(Channel.authenticity_label == authenticity)
 
     # Sorting
     sort_col = getattr(Channel, sort_by, Channel.score)
@@ -194,3 +200,54 @@ async def export_emails(db: AsyncSession = Depends(get_db)):
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=emails_export.csv"},
     )
+
+
+@router.post("/channels/recalculate-authenticity")
+async def recalculate_all_authenticity(db: AsyncSession = Depends(get_db)):
+    """Recalculate authenticity score for all channels."""
+    result = await db.execute(select(Channel))
+    channels = result.scalars().all()
+
+    updated = 0
+    for ch in channels:
+        data = {
+            "subscriber_count": ch.subscriber_count,
+            "video_count": ch.video_count,
+            "view_count": ch.view_count,
+            "description": ch.description,
+            "published_at": ch.published_at,
+        }
+        score, label, signals = AuthenticityScorer.score(data)
+        ch.authenticity_score = score
+        ch.authenticity_label = label
+        ch.authenticity_signals = signals
+        updated += 1
+
+    await db.commit()
+    return {"updated": updated}
+
+
+@router.post("/channels/{channel_id}/recalculate-authenticity", response_model=ChannelOut)
+async def recalculate_channel_authenticity(
+    channel_id: UUID, db: AsyncSession = Depends(get_db),
+):
+    """Recalculate authenticity score for a single channel."""
+    channel = await db.get(Channel, channel_id)
+    if not channel:
+        raise HTTPException(404, "Channel not found")
+
+    data = {
+        "subscriber_count": channel.subscriber_count,
+        "video_count": channel.video_count,
+        "view_count": channel.view_count,
+        "description": channel.description,
+        "published_at": channel.published_at,
+    }
+    score, label, signals = AuthenticityScorer.score(data)
+    channel.authenticity_score = score
+    channel.authenticity_label = label
+    channel.authenticity_signals = signals
+
+    await db.commit()
+    await db.refresh(channel)
+    return channel

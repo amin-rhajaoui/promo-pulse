@@ -19,11 +19,12 @@ export default function ChannelsPage() {
   const [hasEmail, setHasEmail] = useState(false)
   const [isBuyable, setIsBuyable] = useState(false)
   const [subgenre, setSubgenre] = useState("")
+  const [authenticity, setAuthenticity] = useState("")
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null)
   const [exportOpen, setExportOpen] = useState(false)
 
   const { data, isLoading } = useQuery({
-    queryKey: ["channels", page, search, minScore, hasEmail, isBuyable, subgenre],
+    queryKey: ["channels", page, search, minScore, hasEmail, isBuyable, subgenre, authenticity],
     queryFn: () =>
       fetchChannels({
         page,
@@ -33,6 +34,7 @@ export default function ChannelsPage() {
         has_email: hasEmail || undefined,
         is_buyable: isBuyable || undefined,
         subgenre: subgenre || undefined,
+        authenticity: authenticity || undefined,
       }),
   })
 
@@ -122,6 +124,20 @@ export default function ChannelsPage() {
             <option value="Jackin House">Jackin House</option>
             <option value="Jazzy House">Jazzy House</option>
             <option value="House">House</option>
+          </Select>
+        </div>
+        <div className="w-36">
+          <Select
+            value={authenticity}
+            onChange={(e) => {
+              setAuthenticity(e.target.value)
+              setPage(1)
+            }}
+          >
+            <option value="">All auth.</option>
+            <option value="clean">🟢 Clean</option>
+            <option value="suspect">🟡 Suspect</option>
+            <option value="fake">🔴 Fake</option>
           </Select>
         </div>
       </div>

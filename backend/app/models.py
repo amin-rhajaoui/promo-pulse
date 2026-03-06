@@ -67,6 +67,9 @@ class Channel(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     last_upload_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_buyable: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    authenticity_score: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    authenticity_label: Mapped[str] = mapped_column(String(10), default="unknown", server_default="unknown")
+    authenticity_signals: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
     scrape_run_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("scrape_runs.id"), nullable=True
     )

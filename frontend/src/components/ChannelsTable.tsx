@@ -57,6 +57,7 @@ export function ChannelsTable({
               <th className="h-10 px-4 text-left font-medium">Subs</th>
               <th className="h-10 px-4 text-left font-medium">Score</th>
               <th className="h-10 px-4 text-left font-medium">Emails</th>
+              <th className="h-10 px-4 text-left font-medium">Authenticity</th>
               <th className="h-10 px-4 text-left font-medium">Subgenres</th>
               <th className="h-10 px-4 text-left font-medium">Actions</th>
             </tr>
@@ -115,6 +116,19 @@ export function ChannelsTable({
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
+                  </td>
+                  <td className="p-4">
+                    <Badge className={
+                      ch.authenticity_label === "clean" ? "bg-emerald-600 text-white" :
+                      ch.authenticity_label === "suspect" ? "bg-amber-500 text-black" :
+                      ch.authenticity_label === "fake" ? "bg-red-600 text-white" :
+                      "bg-gray-400 text-black"
+                    }>
+                      {ch.authenticity_label === "clean" ? "🟢" :
+                       ch.authenticity_label === "suspect" ? "🟡" :
+                       ch.authenticity_label === "fake" ? "🔴" : "⚪"}
+                      {" "}{ch.authenticity_score}
+                    </Badge>
                   </td>
                   <td className="p-4">
                     <div className="flex gap-1 flex-wrap">
