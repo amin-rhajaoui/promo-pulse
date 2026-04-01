@@ -18,6 +18,8 @@ export async function fetchChannels(params: {
   min_score?: number
   has_email?: boolean
   is_buyable?: boolean
+  is_promo?: boolean
+  is_dj?: boolean
   subgenre?: string
   authenticity?: string
   sort_by?: string
@@ -104,5 +106,17 @@ export async function recalculateAllAuthenticity(): Promise<{ updated: number }>
 
 export async function recalculateChannelAuthenticity(id: string): Promise<Channel> {
   const { data } = await api.post(`/channels/${id}/recalculate-authenticity`)
+  return data
+}
+
+// Promo
+export async function recalculatePromo(): Promise<{ updated: number }> {
+  const { data } = await api.post("/channels/recalculate-promo")
+  return data
+}
+
+// DJ
+export async function recalculateDj(): Promise<{ updated: number }> {
+  const { data } = await api.post("/channels/recalculate-dj")
   return data
 }

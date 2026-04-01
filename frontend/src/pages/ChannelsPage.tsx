@@ -49,7 +49,10 @@ export default function ChannelsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Channels</h1>
+        <div>
+        <h1 className="text-3xl font-bold tracking-tight">Chaînes</h1>
+        <p className="text-muted-foreground mt-1">Rechercher et filtrer les chaînes</p>
+      </div>
         <Button variant="outline" onClick={() => setExportOpen(true)}>
           <Download className="h-4 w-4 mr-1" />
           Export
@@ -123,6 +126,14 @@ export default function ChannelsPage() {
             <option value="Soulful House">Soulful House</option>
             <option value="Jackin House">Jackin House</option>
             <option value="Jazzy House">Jazzy House</option>
+            <option value="Electro House">Electro House</option>
+            <option value="Future House">Future House</option>
+            <option value="Bass House">Bass House</option>
+            <option value="Disco House">Disco House</option>
+            <option value="Piano House">Piano House</option>
+            <option value="Lofi House">Lofi House</option>
+            <option value="Tropical House">Tropical House</option>
+            <option value="Indie House">Indie House</option>
             <option value="House">House</option>
           </Select>
         </div>

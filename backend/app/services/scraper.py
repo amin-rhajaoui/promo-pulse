@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 import uuid
 from datetime import date, datetime, timedelta, timezone
 
@@ -164,6 +165,16 @@ async def _run_live(
                     # Authenticity scoring
                     auth_score, auth_label, auth_signals = AuthenticityScorer.score(ch_data)
 
+                    # Promo detection (description only)
+                    desc_text = ch_data.get("description", "")
+                    is_promo = bool(re.search(
+                        r'\b(promo|promotion|spotify)\b', desc_text, re.IGNORECASE,
+                    ))
+
+                    # DJ detection (title + description)
+                    full_text = ch_data.get("title", "") + " " + desc_text
+                    is_dj = bool(re.search(r'\bDJ\b', full_text))
+
                     await _upsert_channel(db, {
                         **ch_data, **parsed,
                         "subgenres": subgenres_detected,
@@ -171,6 +182,8 @@ async def _run_live(
                         "tier": tier,
                         "last_upload_at": last_upload,
                         "is_buyable": is_buyable,
+                        "is_promo": is_promo,
+                        "is_dj": is_dj,
                         "authenticity_score": auth_score,
                         "authenticity_label": auth_label,
                         "authenticity_signals": auth_signals,
@@ -262,6 +275,16 @@ async def _run_demo(
             # Authenticity scoring
             auth_score, auth_label, auth_signals = AuthenticityScorer.score(ch_data)
 
+            # Promo detection (description only)
+            desc_text = ch_data.get("description", "")
+            is_promo = bool(re.search(
+                r'\b(promo|promotion|spotify)\b', desc_text, re.IGNORECASE,
+            ))
+
+            # DJ detection (title + description)
+            full_text = ch_data.get("title", "") + " " + desc_text
+            is_dj = bool(re.search(r'\bDJ\b', full_text))
+
             await _upsert_channel(db, {
                 **ch_data, **parsed,
                 "subgenres": subgenres_detected,
@@ -269,6 +292,8 @@ async def _run_demo(
                 "tier": tier,
                 "last_upload_at": last_upload,
                 "is_buyable": is_buyable,
+                "is_promo": is_promo,
+                "is_dj": is_dj,
                 "authenticity_score": auth_score,
                 "authenticity_label": auth_label,
                 "authenticity_signals": auth_signals,
@@ -309,6 +334,8 @@ async def _upsert_channel(db: AsyncSession, data: dict):
         tier=data.get("tier"),
         last_upload_at=data.get("last_upload_at"),
         is_buyable=data.get("is_buyable", False),
+        is_promo=data.get("is_promo", False),
+        is_dj=data.get("is_dj", False),
         authenticity_score=data.get("authenticity_score", 0),
         authenticity_label=data.get("authenticity_label", "unknown"),
         authenticity_signals=data.get("authenticity_signals", {}),
@@ -332,6 +359,8 @@ async def _upsert_channel(db: AsyncSession, data: dict):
             "tier": data.get("tier"),
             "last_upload_at": data.get("last_upload_at"),
             "is_buyable": data.get("is_buyable", False),
+            "is_promo": data.get("is_promo", False),
+            "is_dj": data.get("is_dj", False),
             "authenticity_score": data.get("authenticity_score", 0),
             "authenticity_label": data.get("authenticity_label", "unknown"),
             "authenticity_signals": data.get("authenticity_signals", {}),

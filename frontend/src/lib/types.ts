@@ -21,6 +21,8 @@ export interface Channel {
   notes: string | null
   last_upload_at: string | null
   is_buyable: boolean
+  is_promo: boolean
+  is_dj: boolean
   authenticity_score: number
   authenticity_label: string
   authenticity_signals: Record<string, any>

@@ -20,7 +20,10 @@ export default function ScrapingPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Scraping</h1>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Scraping</h1>
+        <p className="text-muted-foreground mt-1">Lancer une recherche de chaînes par subgenre</p>
+      </div>
 
       {quota && (
         <Card>

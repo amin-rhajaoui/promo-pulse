@@ -1,5 +1,6 @@
 import csv
 import io
+import re
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -23,6 +24,8 @@ async def list_channels(
     min_score: int | None = None,
     has_email: bool | None = None,
     is_buyable: bool | None = None,
+    is_promo: bool | None = None,
+    is_dj: bool | None = None,
     subgenre: str | None = None,
     authenticity: str | None = None,
     sort_by: str = "score",
@@ -54,6 +57,14 @@ async def list_channels(
     if is_buyable is not None:
         query = query.where(Channel.is_buyable == is_buyable)
         count_query = count_query.where(Channel.is_buyable == is_buyable)
+
+    if is_promo is not None:
+        query = query.where(Channel.is_promo == is_promo)
+        count_query = count_query.where(Channel.is_promo == is_promo)
+
+    if is_dj is not None:
+        query = query.where(Channel.is_dj == is_dj)
+        count_query = count_query.where(Channel.is_dj == is_dj)
 
     if subgenre:
         query = query.where(Channel.subgenres.any(subgenre))
@@ -118,6 +129,8 @@ async def export_csv(
     min_score: int | None = None,
     has_email: bool | None = None,
     is_buyable: bool | None = None,
+    is_promo: bool | None = None,
+    is_dj: bool | None = None,
     subgenre: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
@@ -127,6 +140,10 @@ async def export_csv(
         query = query.where(Channel.score >= min_score)
     if is_buyable is not None:
         query = query.where(Channel.is_buyable == is_buyable)
+    if is_promo is not None:
+        query = query.where(Channel.is_promo == is_promo)
+    if is_dj is not None:
+        query = query.where(Channel.is_dj == is_dj)
     if has_email is True:
         query = query.where(
             or_(
@@ -251,3 +268,39 @@ async def recalculate_channel_authenticity(
     await db.commit()
     await db.refresh(channel)
     return channel
+
+
+@router.post("/channels/recalculate-promo")
+async def recalculate_promo(db: AsyncSession = Depends(get_db)):
+    """Recalculate is_promo for all channels based on description."""
+    result = await db.execute(select(Channel))
+    channels = result.scalars().all()
+
+    updated = 0
+    for ch in channels:
+        desc = ch.description or ""
+        is_promo = bool(re.search(r'\b(promo|promotion|spotify)\b', desc, re.IGNORECASE))
+        if ch.is_promo != is_promo:
+            ch.is_promo = is_promo
+            updated += 1
+
+    await db.commit()
+    return {"updated": updated}
+
+
+@router.post("/channels/recalculate-dj")
+async def recalculate_dj(db: AsyncSession = Depends(get_db)):
+    """Recalculate is_dj for all channels based on title/description."""
+    result = await db.execute(select(Channel))
+    channels = result.scalars().all()
+
+    updated = 0
+    for ch in channels:
+        text = (ch.title or "") + " " + (ch.description or "")
+        is_dj = bool(re.search(r'\bDJ\b', text))
+        if ch.is_dj != is_dj:
+            ch.is_dj = is_dj
+            updated += 1
+
+    await db.commit()
+    return {"updated": updated}

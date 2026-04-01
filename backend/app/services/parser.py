@@ -127,16 +127,24 @@ class ChannelParser:
         subgenre_keywords = {
             "Deep House": ["deep house", "deephouse"],
             "Tech House": ["tech house", "techhouse"],
-            "Afro House": ["afro house", "afrohouse"],
+            "Afro House": ["afro house", "afrohouse", "tribal house"],
             "Melodic House": ["melodic house", "melodic techno"],
             "Progressive House": ["progressive house"],
-            "Minimal": ["minimal house", "minimal techno", "minimal tech"],
+            "Minimal": ["minimal house", "minimal techno", "minimal tech", "hypnotic house"],
             "Organic House": ["organic house", "downtempo house"],
             "House Classics": ["classic house", "old school house", "90s house", "chicago house"],
             "Latin House": ["latin house", "brazilian house", "latin tech"],
             "Soulful House": ["soulful house", "gospel house", "vocal house"],
-            "Jackin House": ["jackin house", "bass house", "funky house", "g-house"],
+            "Jackin House": ["jackin house", "g-house"],
             "Jazzy House": ["jazzy house", "jazz house", "jazzy deep house"],
+            "Electro House": ["electro house"],
+            "Future House": ["future house"],
+            "Bass House": ["bass house"],
+            "Disco House": ["disco house", "nu disco", "funky house"],
+            "Piano House": ["piano house"],
+            "Lofi House": ["lofi house", "lo-fi house"],
+            "Tropical House": ["tropical house", "chill house", "beach house music", "sunset house"],
+            "Indie House": ["indie dance", "indie house"],
         }
 
         for genre, keywords in subgenre_keywords.items():

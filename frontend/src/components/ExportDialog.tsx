@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { toast } from "sonner"
 import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,10 +24,12 @@ export function ExportDialog({ open, onClose }: Props) {
       subgenre: subgenre || undefined,
     })
     window.open(url, "_blank")
+    toast.success("Export CSV lancé", { description: "Le téléchargement s’ouvre dans un nouvel onglet." })
   }
 
   const handleExportEmails = () => {
     window.open(getExportEmailsUrl(), "_blank")
+    toast.success("Export emails lancé", { description: "Le téléchargement s’ouvre dans un nouvel onglet." })
   }
 
   return (

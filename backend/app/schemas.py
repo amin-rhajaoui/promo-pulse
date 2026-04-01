@@ -29,6 +29,8 @@ class ChannelOut(BaseModel):
     notes: str | None = None
     last_upload_at: date | None = None
     is_buyable: bool = False
+    is_promo: bool = False
+    is_dj: bool = False
     authenticity_score: int = 0
     authenticity_label: str = "unknown"
     authenticity_signals: dict = {}

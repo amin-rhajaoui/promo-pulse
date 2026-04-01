@@ -53,35 +53,46 @@ class YouTubeAPI:
         used = await self.get_quota_used_today()
         return (used + cost) <= settings.daily_quota_limit
 
-    async def search_channels(self, query: str, max_results: int = 50) -> list[dict]:
-        """Search for YouTube channels by keyword."""
-        if not await self._check_quota("search.list"):
-            return []
+    async def search_channels(self, query: str, max_pages: int = 5) -> list[dict]:
+        """Search for YouTube channels by keyword, paginating through results."""
+        all_results: list[dict] = []
+        page_token: str | None = None
 
-        params = {
-            "part": "snippet",
-            "q": query,
-            "type": "channel",
-            "maxResults": min(max_results, 50),
-            "key": self.api_key,
-        }
-        resp = await self._client.get(f"{BASE_URL}/search", params=params)
-        await self._log_quota("search.list", QUOTA_COSTS["search.list"])
+        for _ in range(max_pages):
+            if not await self._check_quota("search.list"):
+                break
 
-        if resp.status_code != 200:
-            return []
-
-        data = resp.json()
-        return [
-            {
-                "youtube_id": item["snippet"]["channelId"],
-                "title": item["snippet"]["title"],
-                "description": item["snippet"]["description"],
-                "thumbnail_url": item["snippet"]["thumbnails"].get("default", {}).get("url"),
+            params: dict = {
+                "part": "snippet",
+                "q": query,
+                "type": "channel",
+                "maxResults": 50,
+                "key": self.api_key,
             }
-            for item in data.get("items", [])
-            if item.get("id", {}).get("kind") == "youtube#channel"
-        ]
+            if page_token:
+                params["pageToken"] = page_token
+
+            resp = await self._client.get(f"{BASE_URL}/search", params=params)
+            await self._log_quota("search.list", QUOTA_COSTS["search.list"])
+
+            if resp.status_code != 200:
+                break
+
+            data = resp.json()
+            for item in data.get("items", []):
+                if item.get("id", {}).get("kind") == "youtube#channel":
+                    all_results.append({
+                        "youtube_id": item["snippet"]["channelId"],
+                        "title": item["snippet"]["title"],
+                        "description": item["snippet"]["description"],
+                        "thumbnail_url": item["snippet"]["thumbnails"].get("default", {}).get("url"),
+                    })
+
+            page_token = data.get("nextPageToken")
+            if not page_token:
+                break
+
+        return all_results
 
     async def get_channel_details(self, channel_ids: list[str]) -> list[dict]:
         """Get detailed info for up to 50 channels at once."""
