@@ -8,7 +8,11 @@ import type {
   Stats,
 } from "./types"
 
-const api = axios.create({ baseURL: "/api" })
+const BASE_URL = import.meta.env.PROD
+  ? "https://promo-pulse-backend-production.up.railway.app/api"
+  : "/api"
+
+const api = axios.create({ baseURL: BASE_URL })
 
 // Channels
 export async function fetchChannels(params: {
@@ -91,11 +95,11 @@ export function getExportCsvUrl(params?: {
   if (params?.has_email) search.set("has_email", "true")
   if (params?.subgenre) search.set("subgenre", params.subgenre)
   const qs = search.toString()
-  return `/api/export/csv${qs ? `?${qs}` : ""}`
+  return `${BASE_URL}/export/csv${qs ? `?${qs}` : ""}`
 }
 
 export function getExportEmailsUrl(): string {
-  return "/api/export/emails"
+  return `${BASE_URL}/export/emails`
 }
 
 // Authenticity
